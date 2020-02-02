@@ -81,7 +81,10 @@ task checkstyleLocal(type: Checkstyle, group: "verification") {
     // You can modify this xml to create your own checkstyle config.
     configFile file("${project.rootDir}/check/square_picasso_checkstyle.xml")
 
-    source 'src'
+    // Only contains the source code (exclude res folder).
+    source 'src/main/java'
+    source 'src/test/java'
+    source 'src/androidTest/java'
 
     exclude '**/gen/**'
     exclude '**/R.java'
