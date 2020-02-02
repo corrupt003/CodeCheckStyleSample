@@ -4,6 +4,20 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'checkstyle'
+
+// Add this line to let `check` task depends on `checkstyleLocal` task,
+// which means when you run `./gradlew check` will run `checkstyleLocal` first.
+// check.dependsOn 'checkstyle'
+
+// Specify the latest checkstyle version if you want to use Google Java style.
+/*
+checkstyle {
+    toolVersion = '8.29'
+}
+*/
+
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -32,4 +46,65 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
+
+def getChangeFiles() {
+    try {
+        String changeInfo = 'git status -s'.execute(null, project.rootDir).text.trim()
+        return changeInfo == null ? "" : changeInfo
+    } catch (Exception e) {
+        println e.printStackTrace()
+        return ""
+    }
+}
+
+static def filterCommitter(String gitstatusinfo, String extension) {
+    ArrayList<String> filterList = new ArrayList<String>()
+    String[] lines = gitstatusinfo.split("\\n")
+    for (String line : lines) {
+        if (line.contains(extension)) {
+            String[] spliters = line.trim().split(" ")
+            for (String str : spliters) {
+                if (str.contains(extension)) {
+                    filterList.add(str)
+                }
+            }
+        }
+    }
+    return filterList
+}
+
+// Run checkstyle BEFORE commit.
+// https://julianchu.net/2017/09/13-checkstyle.html
+// https://www.jianshu.com/p/3337e9174c51
+task checkstyleLocal(type: Checkstyle, group: "verification") {
+    // You can modify this xml to create your own checkstyle config.
+    configFile file("${project.rootDir}/check/square_picasso_checkstyle.xml")
+
+    source 'src'
+
+    exclude '**/gen/**'
+    exclude '**/R.java'
+    exclude '**/BuildConfig.java'
+
+    // Collect the modified and not commit java file.
+    def ft = filterCommitter(getChangeFiles(), ".java")
+    def includeList = new ArrayList<String>()
+    for (int i = 0; i < ft.size(); i++) {
+        String spliter = ft[i]
+        String[] spliterlist = spliter.split("/")
+        String fileName = spliterlist[spliterlist.length - 1]
+
+        includeList.add("**/" + fileName)
+    }
+
+    // Only check the modified java files.
+    if (includeList.size() > 0) {
+        include includeList
+    } else {
+        exclude '**/*.java'
+        exclude '**/*.kt'
+    }
+
+    classpath = files()
 }
