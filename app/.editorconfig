@@ -1,0 +1,7 @@
+# This file is used in ktlint.
+# https://github.com/pinterest/ktlint#editorconfig
+# https://editorconfig.org
+root = true
+
+[*.{kt,kts}]
+disabled_rules = final-newline,no-wildcard-imports
