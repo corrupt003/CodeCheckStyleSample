@@ -160,3 +160,15 @@ task ktlintFormatLocal(type: JavaExec, group: "formatting") {
     main = "com.pinterest.ktlint.Main"
     args "-F", "src/**/*.kt"
 }
+
+// Task to copy pre-commit file into desired location
+task installGitHooks(type: Copy) {
+    from new File(rootProject.rootDir, 'check/pre-commit')
+    into {
+        new File(rootProject.rootDir, '.git/hooks')
+    }
+    fileMode 0755
+}
+
+// Enable this line if we run any `build` task, we'll run `installGitHooks` first.
+// build.dependsOn installGitHooks
